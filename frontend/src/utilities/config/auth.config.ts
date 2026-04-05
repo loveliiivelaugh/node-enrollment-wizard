@@ -7,7 +7,11 @@ const {
     VITE_SUPABASE_KEY: supabaseAnonKey
 } = import.meta.env;
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('[supabase] VITE_SUPABASE_URL or VITE_SUPABASE_KEY is not set – Supabase features will be unavailable.');
+}
+
+const supabase = createClient(supabaseUrl ?? 'http://localhost:54321', supabaseAnonKey ?? 'placeholder');
 
 // Export Connection's
 export { supabase };

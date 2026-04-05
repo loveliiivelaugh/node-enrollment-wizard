@@ -1,6 +1,6 @@
 import { Alert, Box, Button, CircularProgress, Stack, Tooltip, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNodeEnrollmentStore } from '@store/nodeEnrollmentStore';
 import { useGenerateEnrollmentToken } from '../hooks/useNodeEnrollment';
 
@@ -18,8 +18,13 @@ export default function Step4BootstrapCommand() {
 
   const generateToken = useGenerateEnrollmentToken();
 
+  // Use a ref to track whether token generation has been initiated for the
+  // current node, avoiding stale-closure issues with mutation state in the deps array.
+  const tokenRequestedRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (registeredNode && !enrollmentToken && !generateToken.isPending) {
+    if (registeredNode && !enrollmentToken && tokenRequestedRef.current !== registeredNode.id) {
+      tokenRequestedRef.current = registeredNode.id;
       generateToken.mutate(
         { nodeId: registeredNode.id },
         {
@@ -27,10 +32,13 @@ export default function Step4BootstrapCommand() {
             setEnrollmentToken(data.token);
             setBootstrapCommand(data.bootstrapCommand);
           },
+          onError: () => {
+            tokenRequestedRef.current = null; // allow retry
+          },
         }
       );
     }
-  }, [registeredNode?.id]);
+  }, [registeredNode, enrollmentToken, generateToken, setEnrollmentToken, setBootstrapCommand]);
 
   function copyToClipboard() {
     if (bootstrapCommand) {

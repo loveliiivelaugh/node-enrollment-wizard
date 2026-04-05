@@ -1,6 +1,6 @@
 import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useNodeEnrollmentStore } from '@store/nodeEnrollmentStore';
 import { useVerifyNode } from '../hooks/useNodeEnrollment';
 import type { VerificationChecklist } from '../../../../types/nodes';
@@ -46,11 +46,11 @@ export default function Step5Verification() {
   const allDone =
     verificationStatus.registrationCreated && verificationStatus.nodeReady;
 
-  function runCheck() {
+  const runCheck = useCallback(() => {
     verifyNode.mutate(undefined, {
       onSuccess: (data) => setVerificationStatus(data),
     });
-  }
+  }, [verifyNode, setVerificationStatus]);
 
   useEffect(() => {
     if (!allDone) {
@@ -59,7 +59,7 @@ export default function Step5Verification() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [allDone]);
+  }, [allDone, runCheck]);
 
   return (
     <Stack spacing={3}>

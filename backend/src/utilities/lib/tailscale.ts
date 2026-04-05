@@ -41,15 +41,24 @@ export async function getTailscaleDevices(
 
   const data = (await response.json()) as TailscaleDevicesResponse;
 
-  return (data.devices ?? []).map((device) => normalizeDevice(device));
+  return (data.devices ?? []).flatMap((device) => {
+    const normalized = normalizeDevice(device);
+    return normalized ? [normalized] : [];
+  });
 }
 
-function normalizeDevice(device: TailscaleRawDevice): NormalizedDevice {
+function normalizeDevice(device: TailscaleRawDevice): NormalizedDevice | null {
+  // Skip devices without critical identifying fields
+  if (!device.id || !device.hostname || !device.dnsName) {
+    console.warn('[tailscale] Skipping device with missing critical fields:', device);
+    return null;
+  }
+
   return {
-    id: device.id ?? '',
-    name: device.name ?? device.hostname ?? '',
-    hostname: device.hostname ?? '',
-    tailscaleDnsName: device.dnsName ?? '',
+    id: device.id,
+    name: device.name || device.hostname,
+    hostname: device.hostname,
+    tailscaleDnsName: device.dnsName,
     os: device.os ?? 'unknown',
     tags: device.tags ?? [],
     ipAddresses: device.addresses ?? [],

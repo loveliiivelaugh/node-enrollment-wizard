@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { useExampleFeatureStore } from './exampleFeatureStore';
+import { useNodeEnrollmentStore } from './nodeEnrollmentStore';
 
 interface AlertType {
   severity: 'success' | 'error' | 'warning' | 'info';
@@ -63,5 +64,5 @@ const useUtilityStore = create<UtilityStoreType>((set) => ({
   createAlert: (severity, message) => set(() => ({ alert: { severity, message, open: true } })),
 }));
 
-export { useUtilityStore, useExampleFeatureStore };
+export { useUtilityStore, useExampleFeatureStore, useNodeEnrollmentStore };
 export type { AlertType, ConfirmType, UtilityStoreType };

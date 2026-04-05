@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNodeEnrollmentStore } from '@store/nodeEnrollmentStore';
-import { useRegisterNode } from './hooks/useNodeEnrollment';
+import { useRegisterNode, useGenerateEnrollmentToken } from './hooks/useNodeEnrollment';
 import Step1SelectMachine from './components/Step1SelectMachine';
 import Step2ReviewDetails from './components/Step2ReviewDetails';
 import Step3Permissions from './components/Step3Permissions';
@@ -61,9 +61,13 @@ export default function NodeEnrollmentWizardPage() {
   const selectedDevice = useNodeEnrollmentStore((s) => s.selectedDevice);
   const formData = useNodeEnrollmentStore((s) => s.formData);
   const setRegisteredNode = useNodeEnrollmentStore((s) => s.setRegisteredNode);
+  const setEnrollmentToken = useNodeEnrollmentStore((s) => s.setEnrollmentToken);
+  const setBootstrapCommand = useNodeEnrollmentStore((s) => s.setBootstrapCommand);
 
   const registerNode = useRegisterNode();
+  const generateToken = useGenerateEnrollmentToken();
 
+  const isLoading = registerNode.isPending || generateToken.isPending;
   const isLastStep = wizardStep === 5;
   const isFirstStep = wizardStep === 0;
 
@@ -76,13 +80,16 @@ export default function NodeEnrollmentWizardPage() {
   async function handleNext() {
     if (!canProceed()) return;
 
-    // On step 2→3 (index 2 → index 3): register the node first
+    // On step 2→3 (Permissions → Bootstrap): register node then generate token
     if (wizardStep === 2) {
       try {
         const node = await registerNode.mutateAsync(formData);
         setRegisteredNode(node);
+        const tokenData = await generateToken.mutateAsync({ nodeId: node.id });
+        setEnrollmentToken(tokenData.token);
+        setBootstrapCommand(tokenData.bootstrapCommand);
       } catch {
-        return; // stay on step if registration fails
+        return; // stay on step if any async step fails
       }
     }
 
@@ -136,15 +143,15 @@ export default function NodeEnrollmentWizardPage() {
           <Button
             variant="outlined"
             onClick={handleBack}
-            disabled={isFirstStep || registerNode.isPending}
+            disabled={isFirstStep || isLoading}
           >
             Back
           </Button>
           <Button
             variant="contained"
             onClick={handleNext}
-            disabled={!canProceed() || registerNode.isPending}
-            startIcon={registerNode.isPending ? <CircularProgress size={16} /> : undefined}
+            disabled={!canProceed() || isLoading}
+            startIcon={isLoading ? <CircularProgress size={16} /> : undefined}
           >
             {wizardStep === 2 ? 'Register & Continue' : 'Next'}
           </Button>

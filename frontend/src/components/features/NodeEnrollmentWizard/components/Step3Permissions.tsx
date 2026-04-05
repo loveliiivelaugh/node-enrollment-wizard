@@ -71,7 +71,7 @@ export default function Step3Permissions() {
   return (
     <Stack spacing={3}>
       <Typography variant="body2" color="text.secondary">
-        Choose a permission preset for this node. You can customise individual
+        Choose a permission preset for this node. You can customize individual
         capabilities with the Custom option.
       </Typography>
 
